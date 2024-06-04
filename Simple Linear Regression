@@ -7,3 +7,115 @@ print(dfr.info())
 print(dfr.describe())
 dfr.shape
 
+#REMOVE MISSING VALUES (if method shows missing values)
+dfr.isnull().sum()
+dfr.dropna(inplace=True)
+
+# DUPLICATES CHECK
+duplicate_rows = dfr.duplicated()
+print("Number of duplicate rows:", duplicate_rows.sum())
+dfr.drop_duplicates(inplace=True)
+
+# CHECK CLASS DISTRIBUTION
+print(dfr['smoker'].value_counts())
+print(dfr['sex'].value_counts())
+print(dfr['day'].value_counts())
+print(dfr['time'].value_counts())
+
+# HOT-ENCODING DATA
+dfr['sex'] = dfr['sex'].map({'Male':1,'Female':0})
+dfr['smoker'] = dfr['smoker'].map({'No':1,'Yes':0})
+dfr['day'] = dfr['day'].map({'Sat':1,'Sun':2,'Thur':3,'Fri':4})
+dfr['time'] = dfr['time'].map({'Dinner':1,'Lunch':0})
+
+# REMOVE OUTLIERS using IQR method
+import matplotlib.pyplot as plt
+def plot_boxplot(dfr, ft):
+  dfr.boxplot(column=[ft])
+  plt.grid(False)
+  plt.show()
+
+plot_boxplot(dfr,"tip")
+plt.show()
+plot_boxplot(dfr,"total_bill")
+plt.show()
+plot_boxplot(dfr,"size")
+plt.show()
+
+def outliers(dfr, ft):
+  Q1 = dfr[ft].quantile(0.25)
+  Q3 = dfr[ft].quantile(0.75)
+  IQR = Q3 - Q1
+  LL = Q1 - 1.5*IQR
+  UL = Q3 + 1.5*IQR
+
+  Is = dfr.index[(dfr[ft]<LL) | (dfr[ft]>UL)]
+  return Is
+
+index_list = []
+for feature in [ 'tip','total_bill','size']:
+  index_list.extend(outliers(dfr,feature))
+
+print(index_list)
+
+def remove(dfr,Is):
+  Is = sorted(set(Is))
+  dfr = dfr.drop(Is)
+  return dfr
+
+dfc = remove(dfr, index_list)
+print(dfc.shape)
+
+plot_boxplot(dfc, 'tip')
+plt.show()
+
+#DEFINE TRAINING FEATURES
+X= dfc.drop(columns=['tip'])
+print(X)
+
+#DEFINE LABEL
+y= dfc['tip']
+print(y)
+
+#SPLIT DATA SET INTO TRAIN-TEST FEATURES
+from sklearn.model_selection import train_test_split
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3, random_state = 0)
+
+#MODEL TRAINING
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+poly_reg = PolynomialFeatures(degree=7)
+X_poly = poly_reg.fit_transform(X_train)
+regressor = LinearRegression()
+regressor.fit(X_poly,y_train)
+c = regressor.intercept_
+print("c=", c)
+m =regressor.coef_
+print("m=",m)
+
+#PREDICTION
+y_pred_train = regressor.predict(poly_reg.transform(X_train))
+np.set_printoptions(precision=2)
+print(y_pred_train)
+
+#CHECK PREDICTION ACCURACY
+import matplotlib.pyplot as plt
+plt.scatter(y_train, y_pred_train, c= 'green')
+plt.xlabel("Actual tip")
+plt.ylabel("Predicted tip")
+plt.show()
+
+from sklearn.metrics import r2_score
+R_score_train= r2_score(y_train, y_pred_train)
+print(R_score_train)
+
+# EVALUATE MODEL WITH TESTING DATA
+y_pred_test = regressor.predict(poly_reg.transform(X_test))
+np.set_printoptions(precision=3)
+plt.scatter(y_test, y_pred_test, c= 'blue')
+plt.xlabel("Actual tip")
+plt.ylabel("Predicted tip")
+plt.show()
+
+R_score_test=  r2_score( y_test, y_pred_test)
+print(R_score_test)
