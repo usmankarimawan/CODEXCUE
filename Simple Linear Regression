@@ -1,0 +1,9 @@
+import numpy as np
+import pandas as pd
+
+url= "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv"
+dfr = pd.read_csv(url, header=0)
+print(dfr.info())
+print(dfr.describe())
+dfr.shape
+
