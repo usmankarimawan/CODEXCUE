@@ -146,28 +146,3 @@ mean_accuracy_rfc = sum(cv_score_rfc)/len(cv_score_rfc)
 mean_accuracy_rfc = mean_accuracy_rfc*100
 mean_accuracy_rfc = round(mean_accuracy_rfc, 2)
 print(mean_accuracy_rfc )
-
-#HYPERPARAMETER TUNING
-from sklearn.model_selection import RandomizedSearchCV
-import numpy as np
-X= np.array(X)
-Y= np.array(y)
-
-#Loading SVC model
-model = SVC()
-
-parameters = {
-              'kernel':['linear','poly','rbf','sigmoid'],
-              'C':[1,5,10,20]
-}
-
-classifier = RandomizedSearchCV(model, param_distributions=parameters, cv=5)
-classifier.fit(X,Y)
-
-RandomizedSearchCV(cv=5, estimator=SVC(),
-             param_distributions={'C':[1,5,10,20],
-                         'kernel':['linear', 'poly', 'rbf', 'sigmoid']})
-print(classifier.cv_results_)
-
-
-
