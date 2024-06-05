@@ -1,0 +1,167 @@
+# Numpy Library for Numerical Calculations
+import numpy as np
+
+# Pandas Library for Dataframe
+import pandas as pd
+
+# Matplotlib and for Plottings
+import matplotlib.pyplot as plt
+
+# Train_Test_Split for splitting the Dataset
+from sklearn.model_selection import train_test_split
+
+# Logistic Regression, Random Forest Classifier and SVC are Models
+from sklearn.linear_model import LogisticRegression as lr
+from sklearn.ensemble import RandomForestClassifier as rfc
+from sklearn.svm import SVC
+
+# Reading Information in the Data Set
+from google.colab import drive
+drive.mount('/content/drive')
+spam = pd.read_csv('/content/drive/My Drive/emails.csv')
+
+# Check for null values in Data
+spam.isnull().sum()
+spam.dropna(inplace=True)
+
+# Checking the Shape of Data
+print(spam.shape)
+print(spam.info())
+print(spam.describe)
+
+# Count the number of spam and non-spam emails
+spam_count = sum(spam['spam'])
+non_spam_count = len(spam) - spam_count
+total_emails = len(spam)
+
+# Print the count of spam and non-spam emails
+print("\nNumber of spam emails:", spam_count)
+print("Number of non-spam emails:", non_spam_count)
+print("Total number of emails:", total_emails)
+
+# Selecting feautures and label
+x = spam.iloc[:,1:3001]
+print(x)
+
+y = spam['Prediction']
+print(y)
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import KFold , cross_val_score
+from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error, r2_score
+
+x_train , x_test, y_train , y_test = train_test_split(x,y,test_size=0.2, stratify=y, random_state=3)
+
+print(x.shape, x_train.shape, x_test.shape)
+
+# list of models
+models = [lr(max_iter=1000), SVC(kernel='linear'), rfc()]
+
+def compare_models_train_test():
+
+  for model in models:
+
+    # training the model
+    model.fit(x_train, y_train)
+
+    # evaluating the model
+    test_data_prediction = model.predict(x_test)
+
+    accuracy = accuracy_score(y_test, test_data_prediction)
+
+    print('Accuracy score of the ', model, ' = ', accuracy)
+
+compare_models_train_test()
+
+#CROSS VALIDATION
+#LOGISTIC REGRESSION
+cv_score_lr = cross_val_score(lr(max_iter=1000), x, y, cv=5)
+
+print(cv_score_lr)
+
+mean_accuracy_lr = sum(cv_score_lr)/len(cv_score_lr)
+
+mean_accuracy_lr = mean_accuracy_lr*100
+
+mean_accuracy_lr = round(mean_accuracy_lr, 2)
+
+print(mean_accuracy_lr)
+
+#SUPPORT VECTOR CLASSIFIER
+cv_score_svc = cross_val_score(SVC(kernel='linear'), x, y, cv=5)
+
+print(cv_score_svc)
+
+mean_accuracy_svc = sum(cv_score_svc)/len(cv_score_svc)
+
+mean_accuracy_svc = mean_accuracy_svc*100
+
+mean_accuracy_svc = round(mean_accuracy_svc, 2)
+
+print(mean_accuracy_svc)
+
+#CREATING FUNCTION TO COMPARE MODELS
+# list of models
+models = [lr(max_iter=1000), SVC(kernel='linear'), rfc()]
+
+def compare_models_cross_validation():
+
+  for model in models:
+
+    cv_score = cross_val_score(model, x,y, cv=5)
+
+    mean_accuracy = sum(cv_score)/len(cv_score)
+
+    mean_accuracy = mean_accuracy*100
+
+    mean_accuracy = round(mean_accuracy, 2)
+
+    print('Cross Validation accuracies for ', model, '=  ', cv_score)
+    print('Accuracy % of the ', model, mean_accuracy)
+    print('----------------------------------------------')
+compare_models_cross_validation()
+
+#HYPERPARAMETER TUNING-RANDOMIZEDSEARCHCV
+from sklearn.model_selection import RandomizedSearchCV
+import numpy as np
+X= np.asarray(x)
+Y= np.asarray(y)
+
+#Loading SVC model
+model = SVC()
+
+parameters = {
+              'kernel':['linear','poly','rbf','sigmoid'],
+              'C':[1,5,10,20]
+}
+
+classifier = RandomizedSearchCV(model, param_distributions=parameters, cv=5)
+classifier.fit(X,Y)
+
+RandomizedSearchCV(cv=5, estimator=SVC(),
+             param_distributions={'C':[1,5,10,20],
+                         'kernel':['linear', 'poly', 'rbf', 'sigmoid']})
+print(classifier.cv_results_)
+
+# best parameters
+
+best_parameters = classifier.best_params_
+print(best_parameters)# best parameters
+
+# higest accuracy
+
+highest_accuracy = classifier.best_score_
+print(highest_accuracy)
+
+# loading the results to pandas dataframe
+result = pd.DataFrame(classifier.cv_results_)
+
+result.head()
+
+randomized_search_result = result[['param_C','param_kernel','mean_test_score']]
+
+randomized_search_result
+
+
+
+
